@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { NoiseProvider, useNoise } from "./NoiseProvider";
+import { NoiseProvider, useNoise, useLastReading } from "./NoiseProvider";
 import { useObservableState } from "observable-hooks";
 import { Chart, curveBundle } from "react-charts";
 import styled from "styled-components";
@@ -22,7 +22,9 @@ function App() {
 
 function NoiseDisplay() {
   const noise$ = useNoise();
+  const lastReading$ = useLastReading();
   const noiseStream = useObservableState(noise$);
+  const lastReading = useObservableState(lastReading$);
   const series = useMemo(() => ({ showPoints: false, curve: curveBundle }), []);
   const axes = useMemo(
     () => [
@@ -36,7 +38,7 @@ function NoiseDisplay() {
 
   return (
     <Wrapper>
-      <h1>YoMo</h1>
+      <h1>YoMo: { lastReading }</h1>
 
       <div style={{ width: "800px", height: "600px" }}>
         <Chart data={data} series={series} axes={axes} />
