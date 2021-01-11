@@ -1,34 +1,11 @@
+import io from "socket.io-client";
+
 import { createContext, useContext, useState, useEffect } from "react";
 
 import { EMPTY, fromEvent } from "rxjs";
-import { share, map, scan } from "rxjs/operators";
-import io from "socket.io-client";
+import { pairwise, map, share, distinctUntilChanged } from "rxjs/operators";
 
 const NoiseContext = createContext({});
-
-function feedChart() {
-  return function (source) {
-    return source.pipe(
-      scan(
-        (acc, one, index) =>
-          [
-            ...acc,
-            {
-              primary: index,
-              secondary: one,
-            },
-          ].slice(-10),
-        []
-      ),
-      map((data) => [
-        {
-          label: "noise",
-          data,
-        },
-      ])
-    );
-  };
-}
 
 export function NoiseProvider({ children }) {
   const [raw$, setRaw$] = useState(EMPTY);
@@ -38,8 +15,11 @@ export function NoiseProvider({ children }) {
       transports: ["websocket"],
     });
 
-    const raw$ = fromEvent(socket, "receive_sink").pipe(share())
-    setRaw$(raw$)
+    const raw$ = fromEvent(socket, "receive_sink").pipe(
+      map(x => x.toFixed(1)),
+      pairwise(),
+    );
+    setRaw$(raw$);
 
     return () => {
       setRaw$(null);
@@ -48,13 +28,10 @@ export function NoiseProvider({ children }) {
   }, []);
 
   return (
-    <NoiseContext.Provider value={{ noise$: raw$.pipe(feedChart()), lastReading$: raw$ }}>{children}</NoiseContext.Provider>
+    <NoiseContext.Provider value={{ lastReading$: raw$ }}>
+      {children}
+    </NoiseContext.Provider>
   );
-}
-
-export function useNoise() {
-  const { noise$ } = useContext(NoiseContext);
-  return noise$;
 }
 
 export function useLastReading() {
