@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect } from "react";
 
 import { EMPTY, fromEvent } from "rxjs";
-import { share, map, scan } from "rxjs/operators";
+import { tap, windowTime, defaultIfEmpty, last, share, map, scan, mergeAll } from "rxjs/operators";
 import io from "socket.io-client";
 
 const NoiseContext = createContext({});
@@ -9,23 +9,20 @@ const NoiseContext = createContext({});
 function feedChart() {
   return function (source) {
     return source.pipe(
+      windowTime(500),
+      map(win => win.pipe(
+        defaultIfEmpty(null),
+        last()
+      )),
+      mergeAll(),
       scan(
-        (acc, one, index) =>
+        (acc, one) =>
           [
             ...acc,
-            {
-              primary: index,
-              secondary: one,
-            },
+            one,
           ].slice(-10),
-        []
+        Array(10).fill(null)
       ),
-      map((data) => [
-        {
-          label: "noise",
-          data,
-        },
-      ])
     );
   };
 }

@@ -4,6 +4,8 @@ import { useObservableState } from "observable-hooks";
 import { Chart, curveBundle } from "react-charts";
 import styled from "styled-components";
 
+import NoiseChart from './NoiseChart';
+
 const Wrapper = styled.section`
   display: flex;
   height: 100vh;
@@ -15,7 +17,7 @@ const Wrapper = styled.section`
 function App() {
   return (
     <NoiseProvider>
-      <NoiseDisplay />
+      <NoiseChart />
     </NoiseProvider>
   );
 }
